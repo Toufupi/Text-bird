@@ -6,6 +6,16 @@
  * 80 x 24 console.
  */
 
+/**
+ * @author Toufupi
+ * @data 2021.7.24
+ * 1.添加中文批注
+ * 2.管道生成后可以运动
+ * 3.结束界面分数和空格键重新开始，修复历史最高分的BUG
+ * @data 2021.7.25
+ * 1.文件持久化历史最高分
+ * 2.难度选择界面
+ */
 #include <ncurses.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -13,35 +23,29 @@
 #include <time.h>
 #include <assert.h>
 #include <limits.h>
+#include <unistd.h>
+
+
 
 //-------------------------------- Definitions --------------------------------
 
 /**
  * Represents a vertical pipe through which Flappy The Bird is supposed to fly.
  */
+
+ //垂直的管道，相对屏幕高度的百分比是管道高度，center是在整个屏幕里的列数位置。
 typedef struct vpipe {
 
-	/*
-	 * The height of the opening of the pipe as a fraction of the height of the
-	 * console window.
-	 */
 	float opening_height;
 
-	/*
-	 * Center of the pipe is at this column number (e.g. somewhere in [0, 79]).
-	 * When the center + radius is negative then the pipe's center is rolled
-	 * over to somewhere > the number of columns and the opening height is
-	 * changed.
-	 */
 	int center;
 } vpipe;
 
-/** Represents Flappy the Bird. */
+/** Represents Flappy the Bird.鸟的列位置不变,只需要高度数据 */
 typedef struct flappy {
-	/* Height of Flappy the Bird at the last up arrow press. */
+	/* Height of Flappy the Bird at the last up arrow press. 记录高度*/
 	int h0;
-
-	/* Time since last up arrow pressed. */
+	/* Time since last up arrow pressed.记录时间 */
 	int t;
 } flappy;
 
@@ -50,22 +54,22 @@ typedef struct flappy {
 /** Gravitational acceleration constant */
 const float GRAV = 0.05;
 
-/** Initial velocity with up arrow press */
+/** Initial velocity with up arrow press 一按下去就改速度？*/
 const float V0 = -0.5;
 
-/** Number of rows in the console window. */
+/** Number of rows in the console window. 行数*/
 const int NUM_ROWS = 24;
 
-/** Number of columns in the console window. */
+/** Number of columns in the console window. 列数*/
 const int NUM_COLS = 80;
 
-/** Radius of each vertical pipe. */
+/** Radius of each vertical pipe. 柱子的半径，难度控制*/
 const int PIPE_RADIUS = 3;
 
-/** Width of the opening in each pipe. */
+/** Width of the opening in each pipe. 垂直柱子中间的开口，难度控制*/
 const int OPENING_WIDTH = 7;
 
-/** Flappy stays in this column. */
+/** Flappy stays in this column. 暂时不知道是什么*/
 const int FLAPPY_COL = 10;
 
 /** Aiming for this many frames per second. */
@@ -81,6 +85,8 @@ const int PROG_BAR_LEN = 76;
 const int PROG_BAR_ROW = 22;
 
 const int SCORE_START_COL = 62;
+
+FILE *fscore;
 
 //------------------------------ Global Variables -----------------------------
 
@@ -99,7 +105,7 @@ int best_score = 0;
 /** Number of digits in the best score. */
 int bdigs = 1;
 
-/** The vertical pipe obstacles. */
+/** The vertical pipe obstacles.始终只有两个柱子出现 */
 vpipe p1, p2;
 
 //---------------------------------- Functions --------------------------------
@@ -157,6 +163,11 @@ void pipe_refresh(vpipe *p) {
 			sdigs++;
 		else if(sdigs == 2 && score > 99)
 			sdigs++;
+	}
+
+	//当距离较远时移动管道位置,每4帧刷新一次刷新一次
+	if( p->center + PIPE_RADIUS  > 45 && frame%4 == 0){
+        p->opening_height = rand() / ((float) INT_MAX) * 0.5 + 0.25;
 	}
 	p->center--;
 }
@@ -284,14 +295,23 @@ int failure_screen() {
 	clear();
 	mvprintw(NUM_ROWS / 2 - 1, NUM_COLS / 2 - 22,
 			"Flappy died :-(. <Enter> to flap, 'q' to quit.\n");
+    if (score>best_score){
+        best_score = score;
+    }
+    mvprintw(NUM_ROWS / 2 +1, NUM_COLS / 2 - 23,
+             " Score: %d  Best: %d \n", score, best_score);
 	refresh();
 	timeout(-1); // Block until user enters something.
 	ch = getch();
 	switch(ch) {
 	case 'q': // Quit.
+        fopen("fscore.dat","wb");
+        fwrite(&best_score,sizeof(int),1,fscore);
+        fclose(fscore);
 		endwin();
 		exit(0);
 		break;
+
 	default:
 		if (score > best_score)
 			best_score = score;
@@ -302,9 +322,10 @@ int failure_screen() {
 		score = 0;
 		sdigs = 1;
 		return 1; // Restart game.
+
 	}
-	endwin();
-	exit(0);
+	//endwin();
+	//exit(0);
 }
 
 /**
@@ -334,7 +355,7 @@ int draw_flappy(flappy f) {
 		chtostr('\\', c);
 		mvprintw(h, FLAPPY_COL - 1, c);
 		mvprintw(h - 1, FLAPPY_COL - 2, c);
-		chtostr('0', c);
+		chtostr('o', c);
 		mvprintw(h, FLAPPY_COL, c);
 		chtostr('/', c);
 		mvprintw(h, FLAPPY_COL + 1, c);
@@ -356,7 +377,7 @@ int draw_flappy(flappy f) {
 		}
 
 		// Body
-		chtostr('0', c);
+		chtostr('O', c);
 		mvprintw(h, FLAPPY_COL, c);
 
 		// Right wing
@@ -391,7 +412,7 @@ void splash_screen() {
 	mvprintw(r + 3, c, "|_| |_\\__,_| .__/ .__/\\_, | |___/_|_| \\__,_|");
 	mvprintw(r + 4, c, "           |_|  |_|   |__/                  ");
 	mvprintw(NUM_ROWS / 2 + 1, NUM_COLS / 2 - 10,
-			"Press <up> to flap!");
+			"Press <space> to flap!");
 
 	// Print the progress bar.
 	mvprintw(PROG_BAR_ROW, NUM_COLS / 2 - PROG_BAR_LEN / 2 - 1, "[");
@@ -413,6 +434,26 @@ int main()
 	int ch;
 	flappy f;
 	int restart = 1;
+	//play("../Sounds/BGM.mp3");
+
+    fscore = fopen("fscore.dat","a+b");
+
+    if(fscore==NULL){
+        puts("Failed to load score data");
+        exit(0);
+    }else{
+        rewind(fscore);
+        size_t test=fread(&best_score,sizeof(int),1, fscore);
+        if(best_score<0) {
+            best_score = 0;
+        }
+        if (bdigs == 1 && best_score > 9)
+            bdigs++;
+        else if(bdigs == 2 && best_score > 99)
+            bdigs++;
+        fclose(fscore);
+    }
+
 
 	srand(time(NULL));
 
@@ -423,7 +464,6 @@ int main()
 	noecho();				// Don't echo() for getch
 	curs_set(0);
 	timeout(0);
-
 	splash_screen();
 
 	while(!leave_loop) {
@@ -454,7 +494,7 @@ int main()
 			endwin();
 			exit(0);
 			break;
-		case KEY_UP: // Give Flappy a boost!
+		case 0x20: // Give Flappy a boost! space keycode is 0x20.
 			f.h0 = get_flappy_position(f);
 			f.t = 0;
 			break;
