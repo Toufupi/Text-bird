@@ -1,0 +1,36 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/Users/toufupi/CLionProjects/Text-bird/game.c
+ncurses.h
+-
+unistd.h
+-
+stdio.h
+-
+stdlib.h
+-
+time.h
+-
+assert.h
+-
+limits.h
+-
+string.h
+-
+pthread.h
+-
+playaudio.h
+/Users/toufupi/CLionProjects/Text-bird/playaudio.h
+arpa/inet.h
+-
+sys/socket.h
+-
+
+/Users/toufupi/CLionProjects/Text-bird/playaudio.h
+

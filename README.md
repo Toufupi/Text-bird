@@ -19,7 +19,7 @@ linux c 配合ncurses实现的FlappyBird游戏
 
 6. Ok4个场景：游戏开始、准备游戏、游戏运行、游戏结束。//现成 //添加界面与跳转逻辑 singalplayer 和 multiplayer
 
-7. Pause-重构代码 实现主函数分离，便于调试和功能整合
+7. 最后工作-重构代码 实现主函数分离，便于调试和功能整合
 
 8. Next-扩展功能：实现双人游戏模式 
 
@@ -35,10 +35,10 @@ linux c 配合ncurses实现的FlappyBird游戏
 
 --Text-Bird
 
-｜-- main //主程序入口
+｜-- client.c  //客户端，发送与接收数据
 
-｜-- server //服务器端
+｜--server.c //服务器端，两端口8081和8082 开放TCP
 
-｜-- game //游戏主体
+｜-- game.c //游戏主体
 
-｜ -- sound //bgm
+｜ -- playsound.c //音乐播放

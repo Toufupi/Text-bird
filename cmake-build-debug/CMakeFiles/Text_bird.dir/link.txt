@@ -1,0 +1,1 @@
+/Library/Developer/CommandLineTools/usr/bin/cc -g -arch arm64 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX11.3.sdk -Wl,-search_paths_first -Wl,-headerpad_max_install_names CMakeFiles/Text_bird.dir/game.c.o CMakeFiles/Text_bird.dir/playaudio.c.o -o Text_bird  -lncurses -lpthread 

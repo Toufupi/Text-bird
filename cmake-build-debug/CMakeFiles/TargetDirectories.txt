@@ -1,0 +1,3 @@
+/Users/toufupi/CLionProjects/Text-bird/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+/Users/toufupi/CLionProjects/Text-bird/cmake-build-debug/CMakeFiles/edit_cache.dir
+/Users/toufupi/CLionProjects/Text-bird/cmake-build-debug/CMakeFiles/Text_bird.dir
